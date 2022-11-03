@@ -1,7 +1,7 @@
 import Mail from '@ioc:Adonis/Addons/Mail'
 import type { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
 import { User, UserKey } from 'App/Models'
-import { StoreValidator } from 'App/Validators/User/ForgotPassword'
+import { StoreValidator, UpdateValidator } from 'App/Validators/User/ForgotPassword'
 
 export default class ForgotPassword {
   public async store({ request }: HttpContextContract) {
@@ -23,7 +23,27 @@ export default class ForgotPassword {
     })
   }
 
-  public async show({ params }: HttpContextContract) {}
+  public async show({ params }: HttpContextContract) {
+    const userKey = await UserKey.findByOrFail('key', params.key)
+    await userKey.load('user')
+    
+    return userKey.user
+    
+  }
 
-  public async update({ request }: HttpContextContract) {}
+  public async update({ request, response }: HttpContextContract) {
+    // pegar a cheve e a nova senha
+    const {key, password} = await request.validate(UpdateValidator)
+    // find user with the key
+    const userKey = await UserKey.findByOrFail('key', key)
+    const user = await userKey.related('user').query().firstOrFail();
+    // set new password in the finded user
+    await user.merge({password})
+    // save user with new password
+    await user.save()
+    // delete key
+    await userKey.delete()
+
+    return response.ok({message: "ok"})
+  }
 }

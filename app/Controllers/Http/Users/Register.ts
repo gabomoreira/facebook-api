@@ -24,7 +24,7 @@ export default class RegistersController {
         message.to(email),
           message.from('contato@facebook.com', 'Facebook'),
           message.subject('Criação de conta'),
-          message.htmlView('emails/register', { link })
+          message.htmlView('emails/Verify-email', { link })
       })
     })
   }
